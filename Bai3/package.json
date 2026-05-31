@@ -1,0 +1,23 @@
+{
+  "name": "facebook-ai-automation-pipeline-bai3",
+  "version": "1.0.0",
+  "description": "Bai 3 - Phan tich cam xuc bang AI va tu dong hoa trong kien truc Webhook Kafka",
+  "main": "src/core-service/index.js",
+  "scripts": {
+    "start:backend": "node src/backend-api/index.js",
+    "start:webhook": "node src/webhook-service/index.js",
+    "start:core": "node src/core-service/index.js",
+    "start:retry": "node src/retry-service/index.js",
+    "dev:all": "concurrently \"npm run start:backend\" \"npm run start:webhook\" \"npm run start:core\" \"npm run start:retry\"",
+    "test:syntax": "node --check src/backend-api/index.js && node --check src/backend-api/facebookGraphClient.js && node --check src/webhook-service/index.js && node --check src/core-service/index.js && node --check src/retry-service/index.js"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "dotenv": "^16.4.5",
+    "kafkajs": "^2.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
