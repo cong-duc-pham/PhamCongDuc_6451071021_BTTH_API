@@ -8,62 +8,45 @@ Repository này chứa chuỗi bài tập thực hành môn **Lập trình API (
 
 ---
 
-## 🗺️ Sơ Đồ Kiến Trúc Hệ Thống (Bài 2 & Bài 3)
+## 🗺️ Sơ Đồ Kiến Trúc Hệ Thống 
 
 Dưới đây là luồng xử lý sự kiện thời gian thực cực kỳ tối ưu, độc lập và khả năng mở rộng cao giữa các microservices thông qua **Apache Kafka Broker**:
 
 ```mermaid
 graph TD
-    %% Người dùng và Facebook
-    User([Khách Hàng trên Facebook]) -->|Viết Comment / Post| FBPage[Facebook Page]
-    FBPage -->|Gửi Webhook Event| WebhookService[webhook-service :3001]
+    FB["Facebook Page"]
+    Webhook["Webhook + Processing<br/>webhook-service<br/>port: 3001<br/>parse - normalize"]
+    KafkaRaw["Kafka Broker<br/>topic: raw_events"]
+    Core["Core Service<br/>core-service<br/>port: 3002<br/>AI + Automation"]
+    KafkaReply["Kafka Broker<br/>topic: reply_commands<br/>topic: send_retry"]
+    Backend["Backend API<br/>backend-api<br/>port: 3000<br/>Send + Idempotency"]
+    Db["Database<br/>idempotency key"]
+    KafkaFailed["Kafka Broker<br/>topic: send_failed"]
+    Retry["Retry Service<br/>retry-service<br/>port: 3003<br/>exponential backoff"]
+    KafkaDLQ["Kafka topic:<br/>dead_letter<br/>Prometheus<br/>theo dõi offset<br/>Alertmanager<br/>bắn Slack"]
 
-    %% Webhook Ingestion
-    subgraph Webhook Ingestion [1. Tiếp Nhận & Xác Thực]
-        WebhookService -->|Xác thực X-Hub-Signature-256| WebhookService
-        WebhookService -->|Normalize & Publish| KafkaRaw[Kafka: raw_events]
-    end
+    FB -->|HTTP POST| Webhook
+    Webhook -->|publish raw_events| KafkaRaw
+    KafkaRaw -->|consume raw_events| Core
+    Core -->|publish reply_commands| KafkaReply
+    KafkaReply -->|consume reply_commands, send_retry| Backend
+    Backend -.->|Gửi phản hồi<br/>hoặc đăng bài| FB
+    Backend -->|check / save| Db
+    Backend -->|publish send_failed| KafkaFailed
+    KafkaFailed -->|consume send_failed| Retry
+    
+    Retry -->|publish send_retry<br/>counter < N| KafkaReply
+    Retry -->|publish dead_letter (counter >= N)| KafkaDLQ
 
-    %% Core Processing & AI
-    subgraph Core AI Processing [2. Phân Tích AI & Ra Quyết Định]
-        KafkaRaw -->|Consume| CoreService[core-service :3002]
-        CoreService -->|Phân tích Spam & Độc tố| CoreService
-        CoreService -->|AI Sentiment & Intent Analysis| CoreService
-        CoreService -->|Áp dụng Rule Engine| CoreService
-        CoreService -->|Publish Lệnh Phản Hồi| KafkaReply[Kafka: reply_commands]
-    end
+    classDef service fill:#C7D2FE,stroke:#4F46E5,stroke-width:2px,color:#1E1B4B;
+    classDef kafka fill:#FED7AA,stroke:#EA580C,stroke-width:2px,color:#431407;
+    classDef external fill:#FCA5A5,stroke:#EF4444,stroke-width:2px,color:#450A0A;
+    classDef db fill:#86EFAC,stroke:#16A34A,stroke-width:2px,color:#052E16;
 
-    %% Outbound & Retry System
-    subgraph Outbound & Resiliency [3. Xử Lý Phản Hồi & Phục Hồi]
-        KafkaReply -->|Consume| BackendAPI[backend-api :3000]
-        BackendAPI -->|1. Check Idempotency Key| BackendAPI
-        BackendAPI -->|2. Check Circuit Breaker| BackendAPI
-        BackendAPI -->|3. Gọi Facebook Graph API| FBPage
-        
-        %% Hàng đợi Lỗi
-        BackendAPI -->|Gọi lỗi tạm thời| KafkaFailed[Kafka: send_failed]
-        KafkaFailed -->|Consume| RetryService[retry-service :3003]
-        RetryService -->|Exponential Backoff| RetryService
-        RetryService -->|Hết lượt - Publish DLQ| KafkaDLQ[Kafka: dead_letter]
-        RetryService -->|Còn lượt - Publish Retry| KafkaRetry[Kafka: send_retry]
-        KafkaRetry -->|Consume| BackendAPI
-    end
-
-    %% Giám sát & Quản lý
-    subgraph Monitoring [4. Giám Sát Hệ Thống]
-        Prometheus[Prometheus Server] -.->|Thu thập Metric| WebhookService
-        Prometheus -.->|Thu thập Metric| CoreService
-        Prometheus -.->|Thu thập Metric| RetryService
-        Prometheus -.->|Cảnh báo DLQ > 0| AlertManager[Alerting System]
-        KafkaUI[Kafka UI :8080] -.->|Theo dõi Topics| KafkaRaw
-    end
-
-    classDef service fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#F8FAFC;
-    classDef kafka fill:#14532D,stroke:#4ADE80,stroke-width:2px,color:#F0FDF4;
-    classDef external fill:#701A75,stroke:#F472B6,stroke-width:2px,color:#FDF2F8;
-    class WebhookService,CoreService,BackendAPI,RetryService service;
-    class KafkaRaw,KafkaReply,KafkaFailed,KafkaRetry,KafkaDLQ kafka;
-    class FBPage,User,Prometheus,KafkaUI external;
+    class Webhook,Core,Backend,Retry service;
+    class KafkaRaw,KafkaReply,KafkaFailed,KafkaDLQ kafka;
+    class FB external;
+    class Db db;
 ```
 
 ---
