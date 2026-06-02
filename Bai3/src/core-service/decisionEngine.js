@@ -20,8 +20,8 @@ function buildDecision(event, spam, classification, rateLimited) {
   if (actorId && blacklist[actorId]) {
     return {
       status: "processed",
-      automation: "skip_blacklisted_user",
-      commands: [],
+      automation: "hide_blacklisted_user_comment",
+      commands: [{ action: "hide_comment", targetId: event.object.id, reason: "blacklisted_user" }],
       reason: "blacklisted_user"
     };
   }

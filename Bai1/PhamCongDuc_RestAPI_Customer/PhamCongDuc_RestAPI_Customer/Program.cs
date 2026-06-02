@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using PhamCongDuc_RestAPI_Customer.Data;
 using PhamCongDuc_RestAPI_Customer.Models;
 using PhamCongDuc_RestAPI_Customer.Services;
@@ -18,6 +19,23 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "PhamCongDuc - Facebook Page Backend API",
         Version = "v1"
+    });
+
+    c.AddSecurityDefinition("AdminToken", new OpenApiSecurityScheme
+    {
+        Description = "Nhap admin token. Vi du: local_admin_token",
+        Name = "X-Admin-Token",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "AdminToken"
+    });
+
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecuritySchemeReference("AdminToken", document, null),
+            new List<string>()
+        }
     });
 });
 
