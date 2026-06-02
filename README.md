@@ -25,18 +25,18 @@ graph TD
     Retry["Retry Service<br/>retry-service<br/>port: 3003<br/>exponential backoff"]
     KafkaDLQ["Kafka topic:<br/>dead_letter<br/>Prometheus<br/>theo dõi offset<br/>Alertmanager<br/>bắn Slack"]
 
-    FB -->|HTTP POST| Webhook
-    Webhook -->|publish raw_events| KafkaRaw
-    KafkaRaw -->|consume raw_events| Core
-    Core -->|publish reply_commands| KafkaReply
-    KafkaReply -->|consume reply_commands, send_retry| Backend
-    Backend -.->|Gửi phản hồi<br/>hoặc đăng bài| FB
-    Backend -->|check / save| Db
-    Backend -->|publish send_failed| KafkaFailed
-    KafkaFailed -->|consume send_failed| Retry
+    FB -->|"HTTP POST"| Webhook
+    Webhook -->|"publish raw_events"| KafkaRaw
+    KafkaRaw -->|"consume raw_events"| Core
+    Core -->|"publish reply_commands"| KafkaReply
+    KafkaReply -->|"consume reply_commands, send_retry"| Backend
+    Backend -.->|"Gửi phản hồi<br/>hoặc đăng bài"| FB
+    Backend -->|"check / save"| Db
+    Backend -->|"publish send_failed"| KafkaFailed
+    KafkaFailed -->|"consume send_failed"| Retry
     
-    Retry -->|publish send_retry<br/>counter < N| KafkaReply
-    Retry -->|publish dead_letter (counter >= N)| KafkaDLQ
+    Retry -->|"publish send_retry<br/>counter < N"| KafkaReply
+    Retry -->|"publish dead_letter (counter >= N)"| KafkaDLQ
 
     classDef service fill:#C7D2FE,stroke:#4F46E5,stroke-width:2px,color:#1E1B4B;
     classDef kafka fill:#FED7AA,stroke:#EA580C,stroke-width:2px,color:#431407;
