@@ -1,0 +1,23 @@
+{
+  "name": "facebook-ai-automation-pipeline",
+  "version": "1.0.0",
+  "description": "Facebook webhook and Kafka automation pipeline with 4 services",
+  "main": "core-service/index.js",
+  "scripts": {
+    "start:backend": "node backend-api/index.js",
+    "start:webhook": "node webhook-service/index.js",
+    "start:core": "node core-service/index.js",
+    "start:retry": "node retry-service/index.js",
+    "dev:all": "concurrently \"npm run start:backend\" \"npm run start:webhook\" \"npm run start:core\" \"npm run start:retry\"",
+    "test:syntax": "node --check backend-api/index.js && node --check backend-api/facebookGraphClient.js && node --check webhook-service/index.js && node --check core-service/index.js && node --check retry-service/index.js"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "dotenv": "^16.4.5",
+    "kafkajs": "^2.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
