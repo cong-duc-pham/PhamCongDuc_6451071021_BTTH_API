@@ -270,6 +270,49 @@ retry-service
 -> dead_letter
 ```
 
+## Alertmanager Email
+
+Project co the gui email canh bao khi co message roi vao topic `dead_letter`.
+
+Thanh phan lien quan:
+
+- Prometheus doc rule trong `monitoring/prometheus/alerts.yml`.
+- Prometheus gui alert sang Alertmanager tai `alertmanager:9093`.
+- Alertmanager doc cau hinh email trong `monitoring/alertmanager/alertmanager.yml`.
+- File `monitoring/alertmanager/alertmanager.yml` la file local, khong push GitHub.
+- File mau duoc push la `monitoring/alertmanager/alertmanager.yml.example`.
+
+Tao file cau hinh email local:
+
+```powershell
+Copy-Item monitoring\alertmanager\alertmanager.yml.example monitoring\alertmanager\alertmanager.yml
+```
+
+Sau do sua cac gia tri trong `monitoring/alertmanager/alertmanager.yml`:
+
+```yaml
+smtp_from: "your_email@gmail.com"
+smtp_auth_username: "your_email@gmail.com"
+smtp_auth_password: "your_gmail_app_password"
+
+email_configs:
+  - to: "admin_or_team_email@gmail.com"
+```
+
+Neu dung Gmail, `smtp_auth_password` khong phai mat khau dang nhap Gmail thong thuong. Can tao App Password trong Google Account.
+
+Chay lai Docker:
+
+```powershell
+docker compose up -d
+```
+
+Mo Alertmanager:
+
+```text
+http://localhost:9093
+```
+
 ## Bảo Mật Khi Push GitHub
 
 Các file không được push:

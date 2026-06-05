@@ -1,0 +1,32 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: "smtp.gmail.com:587"
+  smtp_from: "your_email@gmail.com"
+  smtp_auth_username: "your_email@gmail.com"
+  smtp_auth_password: "your_gmail_app_password"
+  smtp_require_tls: true
+
+route:
+  receiver: "operations-email"
+  group_by: ["alertname", "severity"]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 30m
+
+receivers:
+  - name: "operations-email"
+    email_configs:
+      - to: "admin_or_team_email@gmail.com"
+        send_resolved: true
+        headers:
+          subject: "[Facebook Pipeline] {{ .CommonLabels.alertname }}"
+        html: |
+          <h3>Facebook Webhook Kafka Pipeline Alert</h3>
+          <p><b>Alert:</b> {{ .CommonLabels.alertname }}</p>
+          <p><b>Severity:</b> {{ .CommonLabels.severity }}</p>
+          {{ range .Alerts }}
+          <hr/>
+          <p><b>Summary:</b> {{ .Annotations.summary }}</p>
+          <p><b>Description:</b> {{ .Annotations.description }}</p>
+          <p><b>Status:</b> {{ .Status }}</p>
+          {{ end }}
